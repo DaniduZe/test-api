@@ -23,6 +23,10 @@ const chargerSchema = new mongoose.Schema({
   units: Number,
   time: Number,
   emergency_stop: Boolean,
+  used_time: Number,
+  used_units: Number,
+  p_time_value: Number,
+  p_unit_value: Number,
 });
 const Charger = mongoose.model('EVdata', chargerSchema);
 
@@ -40,15 +44,15 @@ const User = mongoose.model('User', userSchema);
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
   auth: {
-    user: 'kotapaba4i3i@gmail.com', // Replace with your email address
-    pass: 'yrnt ldxs kubd fzjg', // Replace with your email password
+    user: 'danidusennath@gmail.com', // Replace with your email address
+    pass: 'rydc qzsx lttv dmfn', // Replace with your email password
   },
 });
 
 // Function to send OTP via email
 const sendOTP = async (email, otp) => {
   const mailOptions = {
-    from: 'kotapaba4i3i@gmail.com', // Replace with your email address
+    from: 'danidusennath@gmail.com', // Replace with your email address
     to: email,
     subject: 'OTP for Registration',
     text: `Your OTP for registration is: ${otp}`,
@@ -63,18 +67,21 @@ const sendOTP = async (email, otp) => {
 };
 
 // Charging Station Simulation
-const simulateChargingControl = async (stationId, units, time, action) => {
+const simulateChargingControl = async (stationId, units, time, action, emergency_stop) => {
   try {
     let station = await Charger.findOne({ id: stationId });
 
     if (!station) {
-      // If the station doesn't exist, create a new one
       station = new Charger({
         id: stationId,
         status: false,
         units: units,
         time: time,
         emergency_stop: false,
+        used_time: 0,
+        used_units: 0,
+        p_time_value: 0,
+        p_unit_value: 0,
       });
     }
 
@@ -82,17 +89,55 @@ const simulateChargingControl = async (stationId, units, time, action) => {
       station.status = true;
       station.units = units;
       station.time = time;
+      station.emergency_stop = emergency_stop;
       await station.save();
       return { success: true, message: `Charging started at Station ${stationId}` };
     } else if (action === 'stop' && station.status === true) {
       station.status = false;
-      station.emergency_stop = true;
+      station.emergency_stop = emergency_stop;
       await station.save();
       return { success: true, message: `Charging stopped at Station ${stationId}` };
     } else {
       return { success: false, message: `Invalid action for station ${stationId}` };
     }
   } catch (error) {
+    return { success: false, message: 'Error updating station status in the database' };
+  }
+};
+
+// Charging Station Simulation from Device
+const ChargingControlDevice = async (id, units, time, used_time, used_units, p_time_value, p_unit_value) => {
+  try {
+    let station = await Charger.findOne({ id: id });
+
+    if (!station) {
+      return { success: false, message: `Station with ID ${id} not found` };
+    }
+
+    if (units > 0) {
+      // Charging logic when units are greater than 0
+      station.status = true;
+      station.units = units;
+      station.time = time;
+      station.used_time = used_time;
+      station.used_units = used_units;
+      station.p_time_value = p_time_value;
+      station.p_unit_value = p_unit_value;
+    } else {
+      // Stop charging logic when units are 0
+      station.status = false;
+      station.units = units;
+      station.time = time;
+      station.used_time = used_time;
+      station.used_units = used_units;
+      station.p_time_value = p_time_value;
+      station.p_unit_value = p_unit_value;
+    }
+
+    await station.save();
+    return { success: true, message: `Charging status updated at Station ${id}` };
+  } catch (error) {
+    console.error('Error updating station status:', error);
     return { success: false, message: 'Error updating station status in the database' };
   }
 };
@@ -181,14 +226,13 @@ app.post('/api/charging-stations/:id/:units/:time/start', async (req, res) => {
   const stationId = req.params.id;
   const units = parseInt(req.params.units);
   const time = parseInt(req.params.time);
-  const result = await simulateChargingControl(stationId, units, time, 'start');
+  const result = await simulateChargingControl(stationId, units, time, 'start', false);
   res.json(result);
 });
 
-// Stop charging at a specific station
 app.post('/api/charging-stations/:id/stop', async (req, res) => {
   const stationId = req.params.id;
-  const result = await simulateChargingControl(stationId, 0, 0, 'stop');
+  const result = await simulateChargingControl(stationId, 0, 0, 'stop', true);
   res.json(result);
 });
 
@@ -239,29 +283,21 @@ app.post('/api/verify-otp', async (req, res) => {
   }
 });
 
-// Update OTP verification status
-app.post('/api/update-otp-status', async (req, res) => {
-  const { email } = req.body;
 
-  try {
-    // Find the user by email
-    const user = await User.findOne({ email });
+//update the status from the device
+app.post('/api/charging-stations/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const units = parseInt(req.body.units);
+  const time = parseInt(req.body.time);
+  const used_time = parseInt(req.body.used_time);
+  const used_units = parseInt(req.body.used_units);
+  const p_time_value = parseInt(req.body.p_time_value);
+  const p_unit_value = parseInt(req.body.p_unit_value);
 
-    if (!user) {
-      // User not found
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Update the OTP status in the database
-    user.otp = 'verified';
-    await user.save();
-
-    return res.status(200).json({ message: 'OTP status updated successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  const result = await ChargingControlDevice(id, units, time, used_time, used_units, p_time_value, p_unit_value);
+  res.json(result);
 });
+
 
 // Start the server
 app.listen(PORT, () => {
