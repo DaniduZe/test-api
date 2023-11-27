@@ -6,7 +6,7 @@ const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.use(bodyParser.json());
 
@@ -25,8 +25,6 @@ const chargerSchema = new mongoose.Schema({
   emergency_stop: Boolean,
   used_time: Number,
   used_units: Number,
-  p_time_value: Number,
-  p_unit_value: Number,
 });
 const Charger = mongoose.model('EVdata', chargerSchema);
 
@@ -80,8 +78,6 @@ const simulateChargingControl = async (stationId, units, time, action, emergency
         emergency_stop: false,
         used_time: 0,
         used_units: 0,
-        p_time_value: 0,
-        p_unit_value: 0,
       });
     }
 
@@ -121,8 +117,7 @@ const ChargingControlDevice = async (id, units, time, used_time, used_units, p_t
       station.time = time;
       station.used_time = used_time;
       station.used_units = used_units;
-      station.p_time_value = p_time_value;
-      station.p_unit_value = p_unit_value;
+
     } else {
       // Stop charging logic when units are 0
       station.status = false;
@@ -130,8 +125,7 @@ const ChargingControlDevice = async (id, units, time, used_time, used_units, p_t
       station.time = time;
       station.used_time = used_time;
       station.used_units = used_units;
-      station.p_time_value = p_time_value;
-      station.p_unit_value = p_unit_value;
+
     }
 
     await station.save();
@@ -291,10 +285,8 @@ app.post('/api/charging-stations/:id', async (req, res) => {
   const time = parseInt(req.body.time);
   const used_time = parseInt(req.body.used_time);
   const used_units = parseInt(req.body.used_units);
-  const p_time_value = parseInt(req.body.p_time_value);
-  const p_unit_value = parseInt(req.body.p_unit_value);
 
-  const result = await ChargingControlDevice(id, units, time, used_time, used_units, p_time_value, p_unit_value);
+  const result = await ChargingControlDevice(id, units, time, used_time, used_units);
   res.json(result);
 });
 
