@@ -18,7 +18,7 @@ mongoose.connect('mongodb+srv://ev:ev@evdata.wjsxnmb.mongodb.net/', {
 
 // Charger schema for charging stations
 const chargerSchema = new mongoose.Schema({
-  id: Number,
+  _id: String,
   status: Boolean,
   units: Number,
   time: Number,
@@ -67,11 +67,11 @@ const sendOTP = async (email, otp) => {
 // Charging Station Simulation
 const simulateChargingControl = async (stationId, units, time, action, emergency_stop) => {
   try {
-    let station = await Charger.findOne({ id: stationId });
+    let station = await Charger.findOne({ _id: stationId });
 
     if (!station) {
       station = new Charger({
-        id: stationId,
+        _id: stationId,
         status: false,
         units: units,
         time: time,
@@ -102,7 +102,7 @@ const simulateChargingControl = async (stationId, units, time, action, emergency
 };
 
 // Charging Station Simulation from Device
-const ChargingControlDevice = async (id, units, time, used_time, used_units, p_time_value, p_unit_value) => {
+const ChargingControlDevice = async (id, units, time, used_time, used_units) => {
   try {
     let station = await Charger.findOne({ id: id });
 
