@@ -6,7 +6,7 @@ const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.use(bodyParser.json());
 
@@ -18,7 +18,7 @@ mongoose.connect('mongodb+srv://ev:ev@evdata.wjsxnmb.mongodb.net/', {
 
 // Charger schema for charging stations
 const chargerSchema = new mongoose.Schema({
-  _id: String,
+  id: String,
   status: Boolean,
   units: Number,
   time: Number,
@@ -71,7 +71,7 @@ const simulateChargingControl = async (stationId, units, time, action, emergency
 
     if (!station) {
       station = new Charger({
-        _id: stationId,
+        id: stationId,
         status: false,
         units: units,
         time: time,
