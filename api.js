@@ -118,7 +118,7 @@ const ChargingControlDevice = async (id, units, time, used_time, used_units, eme
       station.time = time;
       station.used_time = used_time;
       station.used_units = used_units;
-      station.emergency_stop =emergency_stop;
+      station.emergency_stop =false;
 
     } else {
       // Stop charging logic when units are 0
@@ -127,7 +127,7 @@ const ChargingControlDevice = async (id, units, time, used_time, used_units, eme
       station.time = time;
       station.used_time = used_time;
       station.used_units = used_units;
-      station.emergency_stop =emergency_stop;
+      
 
     }
 
