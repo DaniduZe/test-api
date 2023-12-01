@@ -18,7 +18,7 @@ mongoose.connect('mongodb+srv://ev:ev@evdata.wjsxnmb.mongodb.net/', {
 
 // Charger schema for charging stations
 const chargerSchema = new mongoose.Schema({
-  id: String,
+  _id: String,
   status: Boolean,
   units: Number,
   time: Number,
@@ -71,7 +71,7 @@ const simulateChargingControl = async (stationId, units, time, action, emergency
 
     if (!station) {
       station = new Charger({
-        id: stationId,
+        _id: stationId,
         status: false,
         units: units,
         time: time,
@@ -102,9 +102,10 @@ const simulateChargingControl = async (stationId, units, time, action, emergency
 };
 
 // Charging Station Simulation from Device
-const ChargingControlDevice = async (id, units, time, used_time, used_units) => {
+const ChargingControlDevice = async (id, units, time, used_time, used_units, emergency_stop) => {
   try {
-    let station = await Charger.findOne({ id: id });
+
+    const station = await Charger.findOne({ _id: id });
 
     if (!station) {
       return { success: false, message: `Station with ID ${id} not found` };
@@ -117,6 +118,7 @@ const ChargingControlDevice = async (id, units, time, used_time, used_units) => 
       station.time = time;
       station.used_time = used_time;
       station.used_units = used_units;
+      station.emergency_stop =emergency_stop;
 
     } else {
       // Stop charging logic when units are 0
@@ -125,6 +127,7 @@ const ChargingControlDevice = async (id, units, time, used_time, used_units) => 
       station.time = time;
       station.used_time = used_time;
       station.used_units = used_units;
+      station.emergency_stop =emergency_stop;
 
     }
 
@@ -233,11 +236,12 @@ app.post('/api/charging-stations/:id/stop', async (req, res) => {
 // Get the 'id' query parameter from the request URL
 app.get('/api/charging-stations/:id', async (req, res) => {
   try {
-    const { id } = req.params; 
+    const { id } = req.params;
 
-    const station = await Charger.findOne({ id: parseInt(id) });
+    const station = await Charger.findOne({ _id: id });
+    
     if (station) {
-      res.json({ id: station.id, status: station.status });
+      res.json({ id: station.id, status: station.status, units: station.units, time: station.time  });
     } else {
       res.status(404).json({ error: `Station with ID ${id} not found` });
     }
@@ -245,6 +249,7 @@ app.get('/api/charging-stations/:id', async (req, res) => {
     res.status(500).json({ error: 'Unable to fetch charging station' });
   }
 });
+
 
 // Verify OTP endpoint
 app.post('/api/verify-otp', async (req, res) => {
@@ -280,13 +285,14 @@ app.post('/api/verify-otp', async (req, res) => {
 
 //update the status from the device
 app.post('/api/charging-stations/:id', async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = req.params.id;
   const units = parseInt(req.body.units);
   const time = parseInt(req.body.time);
   const used_time = parseInt(req.body.used_time);
   const used_units = parseInt(req.body.used_units);
+  const emergency_stop = Boolean(req.body.emergency_stop);
 
-  const result = await ChargingControlDevice(id, units, time, used_time, used_units);
+  const result = await ChargingControlDevice(id, units, time, used_time, used_units, emergency_stop);
   res.json(result);
 });
 
