@@ -102,7 +102,7 @@ const simulateChargingControl = async (stationId, units, time, action, emergency
 };
 
 // Charging Station Simulation from Device
-const ChargingControlDevice = async (id, units, time, used_time, used_units, emergency_stop) => {
+const ChargingControlDevice = async (id, units, time, used_time, used_units, emergency_stop, status) => {
   try {
 
     const station = await Charger.findOne({ _id: id });
@@ -113,20 +113,21 @@ const ChargingControlDevice = async (id, units, time, used_time, used_units, eme
 
     if (units > 0) {
       // Charging logic when units are greater than 0
-      station.status = true;
+      station.status = status;
       station.units = units;
       station.time = time;
       station.used_time = used_time;
       station.used_units = used_units;
-      station.emergency_stop =false;
+      station.emergency_stop =emergency_stop;
 
     } else {
       // Stop charging logic when units are 0
-      station.status = false;
+      station.status = status;
       station.units = units;
       station.time = time;
       station.used_time = used_time;
       station.used_units = used_units;
+      station.emergency_stop =emergency_stop;
       
 
     }
@@ -291,8 +292,9 @@ app.post('/api/charging-stations/:id', async (req, res) => {
   const used_time = parseInt(req.body.used_time);
   const used_units = parseFloat(req.body.used_units);
   const emergency_stop = Boolean(req.body.emergency_stop);
+  const status = Boolean(req.body.status);
 
-  const result = await ChargingControlDevice(id, units, time, used_time, used_units, emergency_stop);
+  const result = await ChargingControlDevice(id, units, time, used_time, used_units, emergency_stop, status);
   res.json(result);
 });
 
