@@ -24,7 +24,7 @@ const chargerSchema = new mongoose.Schema({
   time: Number,
   emergency_stop: Boolean,
   used_time: Number,
-  used_units: Number,
+  used_units: Number ,
 });
 const Charger = mongoose.model('EVdata', chargerSchema);
 
@@ -289,7 +289,7 @@ app.post('/api/charging-stations/:id', async (req, res) => {
   const units = parseInt(req.body.units);
   const time = parseInt(req.body.time);
   const used_time = parseInt(req.body.used_time);
-  const used_units = parseInt(req.body.used_units);
+  const used_units = parseFloat(req.body.used_units);
   const emergency_stop = Boolean(req.body.emergency_stop);
 
   const result = await ChargingControlDevice(id, units, time, used_time, used_units, emergency_stop);
