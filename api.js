@@ -89,7 +89,7 @@ const simulateChargingControl = async (stationId, units, time, action, emergency
       await station.save();
       return { success: true, message: `Charging started at Station ${stationId}` };
     } else if (action === 'stop' && station.status === true) {
-      station.status = false;
+      station.status = true;
       station.emergency_stop = true;
       await station.save();
       return { success: true, message: `Charging stopped at Station ${stationId}` };
