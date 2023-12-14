@@ -241,7 +241,7 @@ app.get('/api/charging-stations/:id', async (req, res) => {
     const station = await Charger.findOne({ _id: id });
     
     if (station) {
-      res.json({ id: station.id, status: station.status, units: station.units, time: station.time, emergency_stop: station.emergency_stop  });
+      res.json({ id: station.id, status: station.status, units: station.units, time: station.time, emergency_stop: station.emergency_stop, used_units:station.used_units, used_time:station.used_time  });
     } else {
       res.status(404).json({ error: `Station with ID ${id} not found` });
     }
