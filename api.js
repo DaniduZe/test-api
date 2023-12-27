@@ -30,6 +30,7 @@ const Charger = mongoose.model('EVdata', chargerSchema);
 
 // User schema for authentication
 const userSchema = new mongoose.Schema({
+  name: String,
   email: String,
   password: String,
   mobileNumber: String,
@@ -141,7 +142,7 @@ const ChargingControlDevice = async (id, units, time, used_time, used_units, eme
 
 // Register a new user with hashed password and OTP
 app.post('/api/register', async (req, res) => {
-  const { email, password, mobileNumber } = req.body;
+  const { name, email, password, mobileNumber } = req.body;
 
   try {
     // Check if the email is already registered
@@ -160,6 +161,7 @@ app.post('/api/register', async (req, res) => {
 
     // Create a new user with hashed password, mobile number, OTP, and OTP expiration
     const newUser = new User({
+      name,
       email,
       password: hashedPassword,
       mobileNumber,
@@ -241,7 +243,7 @@ app.get('/api/charging-stations/:id', async (req, res) => {
     const station = await Charger.findOne({ _id: id });
     
     if (station) {
-      res.json({ id: station.id, status: station.status, units: station.units, time: station.time, emergency_stop: station.emergency_stop, used_units:station.used_units, used_time:station.used_time  });
+      res.json({ id: station.id, status: station.status, units: station.units, time: station.time ,emergency_stop: station.emergency_stop, used_units:station.used_units, used_time:station.used_time  });
     } else {
       res.status(404).json({ error: `Station with ID ${id} not found` });
     }
