@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema({
   mobileNumber: String,
   otp: String,
   otpExpiration: Date,
+  evBalance: Number,
 });
 const User = mongoose.model('User', userSchema);
 
@@ -167,6 +168,7 @@ app.post('/api/register', async (req, res) => {
       mobileNumber,
       otp,
       otpExpiration,
+      evBalance: 0,
     });
 
     await newUser.save();
@@ -297,6 +299,23 @@ app.post('/api/charging-stations/:id', async (req, res) => {
 
   const result = await ChargingControlDevice(id, units, time, used_time, used_units, emergency_stop, status);
   res.json(result);
+});
+
+
+app.get('/api/balance/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const users = await User.findOne({ email: email });
+    
+    if (users) {
+      res.json({ email: users.email, evBalance: users.evBalance    });
+    } else {
+      res.status(404).json({ error: `Station with ${email} not found` });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Unable to fetch user data' });
+  }
 });
 
 
